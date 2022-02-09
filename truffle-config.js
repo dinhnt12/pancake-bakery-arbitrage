@@ -44,11 +44,18 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-    // development: {
-    //  host: "127.0.0.1",     // Localhost (default: none)
-    //  port: 8545,            // Standard Ethereum port (default: none)
-    //  network_id: "*",       // Any network (default: none)
-    // },
+    development: {
+     host: "127.0.0.1",     // Localhost (default: none)
+     port: 8545,            // Standard Ethereum port (default: none)
+     network_id: "*",       // Any network (default: none)
+    },
+    testnet: {
+      provider: () => new HDWalletProvider(process.env.PRIVATE_KEY, `https://data-seed-prebsc-1-s1.binance.org:8545`),
+      network_id: 97
+      // confirmations: 10,
+      // timeoutBlocks: 200,
+      // skipDryRun: true
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port

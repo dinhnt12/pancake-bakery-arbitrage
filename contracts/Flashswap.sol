@@ -13,9 +13,9 @@ contract Flashswap {
     using SafeMath for uint;
 
     address private owner;
-    address private constant pancakeFactory = 0xBCfCcbde45cE874adCB698cC183deBcF17952812;
+    address private constant pancakeFactory = 0x5Fe5cC0122403f06abE2A75DBba1860Edb762985;
     address private constant bakery = 0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F;
-    address private constant ape = 0xcF0feBd3f17CEf5b47b0cD257aCf6025c5BFf3b7; 
+    address private constant ape = 0x64d43296aFD4CA79aF28d3Fe0865e0f2b131a981;
     IUniswapV2Router02 bakeryRouter = IUniswapV2Router02(bakery);
     IUniswapV2Router02 apeRouter = IUniswapV2Router02(ape);
 
@@ -39,6 +39,25 @@ contract Flashswap {
             bytes('not empty')
         );
     }
+
+    function uintToString(uint _i) internal pure returns (string memory str) {
+      if (_i == 0) {
+      return "0";
+      }
+      uint j = _i;
+      uint len;
+      while (j != 0) {
+          len++;
+          j /= 10;
+      }
+      bytes memory bstr = new bytes(len);
+      uint k = len - 1;
+      while (_i != 0) {
+          bstr[k--] = byte(uint8(48 + _i % 10));
+          _i /= 10;
+      }
+      return string(bstr);
+  }
 
     function pancakeCall(
         address _sender,
@@ -68,27 +87,37 @@ contract Flashswap {
         token.approve(address(apeRouter), amountToken);
 
         // calculate the amount of token how much input token should be reimbursed
-        uint amountRequired = UniswapV2Library.getAmountsIn(
+        uint[] memory amountRequired = UniswapV2Library.getAmountsOut(
             pancakeFactory,
             amountToken,
             path
-        )[0];
+        );
+        // string memory a = uintToString(amountRequired[0]);
+        string memory b = uintToString(amountRequired[1]);
+        // string memory out = string(abi.encodePacked(a,' ',b));
+        // require(0 > 1, out);
 
         // swap token and obtain equivalent otherToken amountRequired as a result
         // need to receive amountRequired at minimum amount to pay back
         // uint amountReceived = bakeryRouter.swapExactTokensForTokens(
         uint amountReceived = apeRouter.swapExactTokensForTokens(
             amountToken,
-            amountRequired,
+            amountRequired[1],
             path,
-            msg.sender,
+            address(this),
             block.timestamp
         )[1];
-
-        require(amountReceived > amountRequired); // fail if we didn't get enough tokens
+        string memory c = uintToString(amountReceived);
+        string memory d = string(abi.encodePacked(c,' ',b));
+        require(amountReceived > amountRequired[1], d); // fail if we didn't get enough tokens
         IERC20 otherToken = IERC20(_amount0 == 0 ? token0 : token1);
-        otherToken.transfer(msg.sender, amountRequired);
-        otherToken.transfer(owner, amountReceived.sub(amountRequired));
+        otherToken.transfer(msg.sender, amountRequired[1] * 3 / 2);
+
+        // uint256 amount = otherToken.balanceOf(address(this));
+        // string memory am = uintToString(amount);
+        // require(0 > 1, am);
+        // string memory e = uintToString(amountReceived.sub(amountRequired[1]));
+        otherToken.transfer(owner, amountRequired[1]); //amountReceived.sub(amountRequired[1]));
     }
 
     receive() external payable {}

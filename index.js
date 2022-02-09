@@ -41,16 +41,19 @@ const apeRouter = new web3.eth.Contract(
     addresses.ape.router
 );
 
-const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
-const fromTokens = ['WBNB'];
+var inT = '0x4c923E7D44284e4BD19ec78d8590Af8AB76c9dDC'  //ABC
+var outT = '0x9b1687605f5FaaAf7B5c91Ade20BA2fa527f8C19'  // BUSD
+
+const WBNB = inT;
+const fromTokens = ['ABC'];
 const fromToken = [
-    '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' // WBNB
+    inT // WBNB
 ];
 const fromTokenDecimals = [18];
 
 const toTokens = ['BUSD'];
 const toToken = [
-    '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56' // BUSD
+    outT // BUSD
 ];
 const toTokenDecimals = [18];
 const amount = process.env.BNB_AMOUNT;
@@ -63,6 +66,8 @@ const init = async () => {
         Flashswap.networks[networkId].address
     );
 
+    let onTrading = false;
+
     let subscription = web3.eth.subscribe('newBlockHeaders', (error, result) => {
         if (!error) {
             // console.log(result);
@@ -74,9 +79,12 @@ const init = async () => {
         console.log(`You are connected on ${subscriptionId}`);
     })
     .on('data', async block => {
+        if (onTrading) return
         console.log('-------------------------------------------------------------');
         console.log(`New block received. Block # ${block.number}`);
         console.log(`GasLimit: ${block.gasLimit} and Timestamp: ${block.timestamp}`);
+
+        onTrading = true;
 
         for (let i = 0; i < fromTokens.length; i++) {
             for (let j = 0; j < toTokens.length; j++) {
@@ -128,10 +136,10 @@ const init = async () => {
                 `);
 
                 let profit = await new BigNumber(amount2).minus(amount0);
-                let unit3  = await new BigNumber(unit2).minus(unit0);
 
-                if (profit > 0) {
-                    const tx = flashswap.methods.startArbitrage(
+                // if (profit > 0) {
+                if (true) {
+                const tx = flashswap.methods.startArbitrage(
                         tokenIn,
                         tokenOut,
                         amount0,
@@ -149,7 +157,8 @@ const init = async () => {
                     const txCost = await web3.utils.toBN(gasCost) * web3.utils.toBN(gasPrice);
                     profit = await new BigNumber(profit).minus(txCost);
 
-                    if (profit > 0) {
+                    // if (profit > 0) {
+                    if (true) {
                         console.log(`Block # ${block.number}: Arbitrage opportunity found! Expected profit: ${profit}`);
                         const data = tx.encodeABI();
                         const txData = {
